@@ -2,6 +2,7 @@ package godeez
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -21,18 +22,23 @@ type Track struct {
 func GetTopTracks() ([]Track, error) {
 	url := deezerAPIBaseURL + "/chart/tracks"
 
+	fmt.Println("Fetching track data from API")
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error making HTTP request: %v", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
 
 	var tracks struct {
 		Data []Track `json:"data"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&tracks); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error decoding JSON: %v", err)
 	}
 
 	return tracks.Data, nil
